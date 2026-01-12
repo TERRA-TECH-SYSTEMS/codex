@@ -14,6 +14,11 @@ on:
         description: 'VSCodium version to base on (e.g., 1.107.18627)'
         required: true
         default: '1.107.18627'
+      create_release:
+        description: 'Create GitHub Release?'
+        required: true
+        type: boolean
+        default: true
 
 env:
   PRODUCT_NAME: "CodeEX - Ageixtic IDE"
@@ -355,7 +360,7 @@ jobs:
   create-release:
     needs: [build-macos-arm64, build-macos-x64, build-windows, build-linux]
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/') || github.event.inputs.create_release == 'true'
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -363,7 +368,8 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          name: CodeEX ${{ github.ref_name }}
+          tag_name: v${{ env.CODEX_VERSION }}
+          name: CodeEX v${{ env.CODEX_VERSION }}
           draft: false
           prerelease: false
           files: |
@@ -372,13 +378,13 @@ jobs:
             CodeEX-windows-x64/*
             CodeEX-linux-x64/*
           body: |
-            ## CodeEX - Ageixtic IDE ${{ github.ref_name }}
+            ## CodeEX - Ageixtic IDE v${{ env.CODEX_VERSION }}
 
             ### Downloads
-            - **macOS Apple Silicon**: CodeEX-Ageixtic-IDE-${{ github.ref_name }}-arm64.dmg
-            - **macOS Intel**: CodeEX-Ageixtic-IDE-${{ github.ref_name }}-x64.dmg
-            - **Windows x64**: CodeEX-Ageixtic-IDE-${{ github.ref_name }}-win-x64.zip
-            - **Linux x64**: CodeEX-Ageixtic-IDE-${{ github.ref_name }}-linux-x64.tar.gz
+            - **macOS Apple Silicon**: CodeEX-Ageixtic-IDE-${{ env.CODEX_VERSION }}-arm64.dmg
+            - **macOS Intel**: CodeEX-Ageixtic-IDE-${{ env.CODEX_VERSION }}-x64.dmg
+            - **Windows x64**: CodeEX-Ageixtic-IDE-${{ env.CODEX_VERSION }}-win-x64.zip
+            - **Linux x64**: CodeEX-Ageixtic-IDE-${{ env.CODEX_VERSION }}-linux-x64.tar.gz
 
             ### Included Extensions
             - Ageixtic Core - Ollama AI integration
