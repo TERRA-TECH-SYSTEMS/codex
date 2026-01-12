@@ -39,7 +39,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install Rust
-        uses: dtolnay/rust-action@stable
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Build CodeEX
         env:
@@ -127,7 +127,7 @@ jobs:
           path: CodeEX-Ageixtic-IDE-*-arm64.dmg
 
   build-macos-x64:
-    runs-on: macos-13
+    runs-on: macos-15
     steps:
       - name: Checkout CodeEX
         uses: actions/checkout@v4
@@ -149,7 +149,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install Rust
-        uses: dtolnay/rust-action@stable
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Build CodeEX
         env:
@@ -255,7 +255,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install Rust
-        uses: dtolnay/rust-action@stable
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Build CodeEX
         env:
@@ -308,7 +308,7 @@ jobs:
           sudo apt-get install -y libx11-dev libxkbfile-dev libsecret-1-dev rpm
 
       - name: Install Rust
-        uses: dtolnay/rust-action@stable
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Build CodeEX
         env:
