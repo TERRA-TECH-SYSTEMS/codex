@@ -10,12 +10,16 @@ A customized VS Code-based IDE by TERRA TECH SYSTEMS with integrated AI capabili
 
 ## Downloads
 
+All releases are available at [GitHub Releases](https://github.com/TERRA-TECH-SYSTEMS/codex/releases).
+
 | Platform | Download |
 |----------|----------|
-| macOS Apple Silicon | [CodeEX-Ageixtic-IDE-0.1.0-arm64.dmg](https://github.com/TERRA-TECH-SYSTEMS/codex/releases/latest) |
-| macOS Intel | Coming soon |
-| Windows x64 | Coming soon |
-| Linux x64 | Coming soon |
+| macOS Apple Silicon | [CodeEX-Ageixtic-IDE-0.1.0-arm64.dmg](https://github.com/TERRA-TECH-SYSTEMS/codex/releases/download/v0.1.0/CodeEX-Ageixtic-IDE-0.1.0-arm64.dmg) |
+| macOS Intel | [CodeEX-Ageixtic-IDE-0.1.0-x64.dmg](https://github.com/TERRA-TECH-SYSTEMS/codex/releases/download/v0.1.0/CodeEX-Ageixtic-IDE-0.1.0-x64.dmg) |
+| Windows x64 | [CodeEX-Ageixtic-IDE-0.1.0-win-x64.zip](https://github.com/TERRA-TECH-SYSTEMS/codex/releases/download/v0.1.0/CodeEX-Ageixtic-IDE-0.1.0-win-x64.zip) |
+| Linux x64 | [CodeEX-Ageixtic-IDE-0.1.0-linux-x64.tar.gz](https://github.com/TERRA-TECH-SYSTEMS/codex/releases/download/v0.1.0/CodeEX-Ageixtic-IDE-0.1.0-linux-x64.tar.gz) |
+
+> **Note:** macOS builds are signed with Developer ID and notarized by Apple.
 
 ## Installation
 

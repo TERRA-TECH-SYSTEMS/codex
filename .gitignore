@@ -17,6 +17,10 @@ certificates/*.p12
 certificates/*.b64
 *.p12
 *.cer
+*.key
+*.pem
+signing/
+*.certSigningRequest
 
 # OS files
 .DS_Store
