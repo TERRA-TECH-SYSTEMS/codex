@@ -10,12 +10,16 @@ on:
         description: 'Version to build (e.g., 0.1.0)'
         required: true
         default: '0.1.0'
+      vscodium_version:
+        description: 'VSCodium version to base on (e.g., 1.96.2.25012)'
+        required: true
+        default: '1.96.2.25012'
 
 env:
   PRODUCT_NAME: "CodeEX - Ageixtic IDE"
   APP_NAME: "CodeEX"
-  VSCODE_QUALITY: stable
-  RELEASE_VERSION: ${{ github.event.inputs.version || '0.1.0' }}
+  CODEX_VERSION: ${{ github.event.inputs.version || '0.1.0' }}
+  VSCODIUM_VERSION: ${{ github.event.inputs.vscodium_version || '1.96.2.25012' }}
 
 jobs:
   build-macos-arm64:
@@ -24,40 +28,44 @@ jobs:
       - name: Checkout CodeEX
         uses: actions/checkout@v4
 
-      - name: Checkout VSCodium
-        uses: actions/checkout@v4
-        with:
-          repository: VSCodium/vscodium
-          path: vscodium
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Install Dependencies
+      - name: Download VSCodium
         run: |
-          brew install jq
+          curl -L -o vscodium.zip "https://github.com/VSCodium/vscodium/releases/download/${{ env.VSCODIUM_VERSION }}/VSCodium-darwin-arm64-${{ env.VSCODIUM_VERSION }}.zip"
+          unzip vscodium.zip -d VSCodium-darwin-arm64
 
-      - name: Build CodeEX
-        env:
-          VSCODE_ARCH: arm64
-          OS_NAME: osx
-          SHOULD_BUILD: yes
-          VSCODE_QUALITY: stable
-          RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
+      - name: Apply CodeEX Branding
         run: |
-          cd vscodium
-          ./get_repo.sh
-          ./build.sh
+          APP_PATH="VSCodium-darwin-arm64/VSCodium.app"
+
+          # Rename app
+          mv "$APP_PATH" "VSCodium-darwin-arm64/${APP_NAME}.app"
+          APP_PATH="VSCodium-darwin-arm64/${APP_NAME}.app"
+
+          # Update Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleName '${APP_NAME}'" "$APP_PATH/Contents/Info.plist"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName '${PRODUCT_NAME}'" "$APP_PATH/Contents/Info.plist"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier 'com.terratech.codex'" "$APP_PATH/Contents/Info.plist"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString '${{ env.CODEX_VERSION }}'" "$APP_PATH/Contents/Info.plist"
+
+          # Copy branding assets if they exist
+          if [ -d "branding/icons" ]; then
+            cp -r branding/icons/* "$APP_PATH/Contents/Resources/" 2>/dev/null || true
+          fi
+
+      - name: Install Extensions
+        run: |
+          APP_PATH="VSCodium-darwin-arm64/${APP_NAME}.app"
+          EXT_DIR="$APP_PATH/Contents/Resources/app/extensions"
+
+          # Install bundled extensions
+          for ext in extensions/*/; do
+            if [ -f "$ext/package.json" ]; then
+              ext_name=$(basename "$ext")
+              mkdir -p "$EXT_DIR/$ext_name"
+              cp -r "$ext"/* "$EXT_DIR/$ext_name/"
+              echo "Installed extension: $ext_name"
+            fi
+          done
 
       - name: Import Code Signing Certificate
         env:
@@ -76,26 +84,29 @@ jobs:
         env:
           CERT_NAME: "Developer ID Application: TERRA TECH SYSTEMS (V2F8RR8GSR)"
         run: |
-          APP_PATH="vscodium/VSCode-darwin-arm64/${APP_NAME}.app"
+          APP_PATH="VSCodium-darwin-arm64/${APP_NAME}.app"
+
+          # Remove existing signatures
+          codesign --remove-signature "$APP_PATH" 2>/dev/null || true
 
           # Sign all nested binaries
           find "$APP_PATH" \( -name "*.node" -o -name "*.dylib" \) -type f | while read file; do
-            codesign --force --options runtime --timestamp --sign "$CERT_NAME" "$file"
+            codesign --force --options runtime --timestamp --sign "$CERT_NAME" "$file" 2>/dev/null || true
           done
 
           # Sign executables
-          for binary in rg codex-tunnel spawn-helper ShipIt; do
+          for binary in rg node codium-tunnel spawn-helper ShipIt; do
             find "$APP_PATH" -name "$binary" -type f | while read file; do
-              codesign --force --options runtime --timestamp --sign "$CERT_NAME" "$file"
+              codesign --force --options runtime --timestamp --sign "$CERT_NAME" "$file" 2>/dev/null || true
             done
           done
 
           # Sign frameworks and helpers
-          find "$APP_PATH/Contents/Frameworks" -name "*.framework" -type d | while read fw; do
+          find "$APP_PATH/Contents/Frameworks" -name "*.framework" -type d 2>/dev/null | while read fw; do
             codesign --force --deep --options runtime --timestamp --sign "$CERT_NAME" "$fw"
           done
 
-          find "$APP_PATH/Contents/Frameworks" -name "*.app" -type d | while read helper; do
+          find "$APP_PATH/Contents/Frameworks" -name "*.app" -type d 2>/dev/null | while read helper; do
             codesign --force --deep --options runtime --timestamp --sign "$CERT_NAME" "$helper"
           done
 
@@ -106,13 +117,13 @@ jobs:
         run: |
           DMG_TEMP="/tmp/codex-dmg"
           mkdir -p "$DMG_TEMP"
-          cp -R "vscodium/VSCode-darwin-arm64/${APP_NAME}.app" "$DMG_TEMP/"
+          cp -R "VSCodium-darwin-arm64/${APP_NAME}.app" "$DMG_TEMP/"
           ln -s /Applications "$DMG_TEMP/Applications"
 
           hdiutil create -volname "$PRODUCT_NAME" \
             -srcfolder "$DMG_TEMP" \
             -ov -format UDZO \
-            "CodeEX-Ageixtic-IDE-${{ github.event.inputs.version || github.ref_name }}-arm64.dmg"
+            "CodeEX-Ageixtic-IDE-${{ env.CODEX_VERSION }}-arm64.dmg"
 
       - name: Notarize DMG
         env:
@@ -120,13 +131,13 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
         run: |
-          xcrun notarytool submit "CodeEX-Ageixtic-IDE-${{ github.event.inputs.version || github.ref_name }}-arm64.dmg" \
+          xcrun notarytool submit "CodeEX-Ageixtic-IDE-${{ env.CODEX_VERSION }}-arm64.dmg" \
             --apple-id "$APPLE_ID" \
             --team-id "$APPLE_TEAM_ID" \
             --password "$APPLE_APP_PASSWORD" \
             --wait
 
-          xcrun stapler staple "CodeEX-Ageixtic-IDE-${{ github.event.inputs.version || github.ref_name }}-arm64.dmg"
+          xcrun stapler staple "CodeEX-Ageixtic-IDE-${{ env.CODEX_VERSION }}-arm64.dmg"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -140,40 +151,40 @@ jobs:
       - name: Checkout CodeEX
         uses: actions/checkout@v4
 
-      - name: Checkout VSCodium
-        uses: actions/checkout@v4
-        with:
-          repository: VSCodium/vscodium
-          path: vscodium
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Install Dependencies
+      - name: Download VSCodium
         run: |
-          brew install jq
+          curl -L -o vscodium.zip "https://github.com/VSCodium/vscodium/releases/download/${{ env.VSCODIUM_VERSION }}/VSCodium-darwin-x64-${{ env.VSCODIUM_VERSION }}.zip"
+          unzip vscodium.zip -d VSCodium-darwin-x64
 
-      - name: Build CodeEX
-        env:
-          VSCODE_ARCH: x64
-          OS_NAME: osx
-          SHOULD_BUILD: yes
-          VSCODE_QUALITY: stable
-          RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
+      - name: Apply CodeEX Branding
         run: |
-          cd vscodium
-          ./get_repo.sh
-          ./build.sh
+          APP_PATH="VSCodium-darwin-x64/VSCodium.app"
+
+          mv "$APP_PATH" "VSCodium-darwin-x64/${APP_NAME}.app"
+          APP_PATH="VSCodium-darwin-x64/${APP_NAME}.app"
+
+          /usr/libexec/PlistBuddy -c "Set :CFBundleName '${APP_NAME}'" "$APP_PATH/Contents/Info.plist"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName '${PRODUCT_NAME}'" "$APP_PATH/Contents/Info.plist"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier 'com.terratech.codex'" "$APP_PATH/Contents/Info.plist"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString '${{ env.CODEX_VERSION }}'" "$APP_PATH/Contents/Info.plist"
+
+          if [ -d "branding/icons" ]; then
+            cp -r branding/icons/* "$APP_PATH/Contents/Resources/" 2>/dev/null || true
+          fi
+
+      - name: Install Extensions
+        run: |
+          APP_PATH="VSCodium-darwin-x64/${APP_NAME}.app"
+          EXT_DIR="$APP_PATH/Contents/Resources/app/extensions"
+
+          for ext in extensions/*/; do
+            if [ -f "$ext/package.json" ]; then
+              ext_name=$(basename "$ext")
+              mkdir -p "$EXT_DIR/$ext_name"
+              cp -r "$ext"/* "$EXT_DIR/$ext_name/"
+              echo "Installed extension: $ext_name"
+            fi
+          done
 
       - name: Import Code Signing Certificate
         env:
@@ -192,23 +203,25 @@ jobs:
         env:
           CERT_NAME: "Developer ID Application: TERRA TECH SYSTEMS (V2F8RR8GSR)"
         run: |
-          APP_PATH="vscodium/VSCode-darwin-x64/${APP_NAME}.app"
+          APP_PATH="VSCodium-darwin-x64/${APP_NAME}.app"
+
+          codesign --remove-signature "$APP_PATH" 2>/dev/null || true
 
           find "$APP_PATH" \( -name "*.node" -o -name "*.dylib" \) -type f | while read file; do
-            codesign --force --options runtime --timestamp --sign "$CERT_NAME" "$file"
+            codesign --force --options runtime --timestamp --sign "$CERT_NAME" "$file" 2>/dev/null || true
           done
 
-          for binary in rg codex-tunnel spawn-helper ShipIt; do
+          for binary in rg node codium-tunnel spawn-helper ShipIt; do
             find "$APP_PATH" -name "$binary" -type f | while read file; do
-              codesign --force --options runtime --timestamp --sign "$CERT_NAME" "$file"
+              codesign --force --options runtime --timestamp --sign "$CERT_NAME" "$file" 2>/dev/null || true
             done
           done
 
-          find "$APP_PATH/Contents/Frameworks" -name "*.framework" -type d | while read fw; do
+          find "$APP_PATH/Contents/Frameworks" -name "*.framework" -type d 2>/dev/null | while read fw; do
             codesign --force --deep --options runtime --timestamp --sign "$CERT_NAME" "$fw"
           done
 
-          find "$APP_PATH/Contents/Frameworks" -name "*.app" -type d | while read helper; do
+          find "$APP_PATH/Contents/Frameworks" -name "*.app" -type d 2>/dev/null | while read helper; do
             codesign --force --deep --options runtime --timestamp --sign "$CERT_NAME" "$helper"
           done
 
@@ -218,13 +231,13 @@ jobs:
         run: |
           DMG_TEMP="/tmp/codex-dmg"
           mkdir -p "$DMG_TEMP"
-          cp -R "vscodium/VSCode-darwin-x64/${APP_NAME}.app" "$DMG_TEMP/"
+          cp -R "VSCodium-darwin-x64/${APP_NAME}.app" "$DMG_TEMP/"
           ln -s /Applications "$DMG_TEMP/Applications"
 
           hdiutil create -volname "$PRODUCT_NAME" \
             -srcfolder "$DMG_TEMP" \
             -ov -format UDZO \
-            "CodeEX-Ageixtic-IDE-${{ github.event.inputs.version || github.ref_name }}-x64.dmg"
+            "CodeEX-Ageixtic-IDE-${{ env.CODEX_VERSION }}-x64.dmg"
 
       - name: Notarize DMG
         env:
@@ -232,13 +245,13 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
         run: |
-          xcrun notarytool submit "CodeEX-Ageixtic-IDE-${{ github.event.inputs.version || github.ref_name }}-x64.dmg" \
+          xcrun notarytool submit "CodeEX-Ageixtic-IDE-${{ env.CODEX_VERSION }}-x64.dmg" \
             --apple-id "$APPLE_ID" \
             --team-id "$APPLE_TEAM_ID" \
             --password "$APPLE_APP_PASSWORD" \
             --wait
 
-          xcrun stapler staple "CodeEX-Ageixtic-IDE-${{ github.event.inputs.version || github.ref_name }}-x64.dmg"
+          xcrun stapler staple "CodeEX-Ageixtic-IDE-${{ env.CODEX_VERSION }}-x64.dmg"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -252,48 +265,39 @@ jobs:
       - name: Checkout CodeEX
         uses: actions/checkout@v4
 
-      - name: Checkout VSCodium
-        uses: actions/checkout@v4
-        with:
-          repository: VSCodium/vscodium
-          path: vscodium
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Install Dependencies
-        shell: bash
+      - name: Download VSCodium
+        shell: pwsh
         run: |
-          choco install jq -y
+          Invoke-WebRequest -Uri "https://github.com/VSCodium/vscodium/releases/download/${{ env.VSCODIUM_VERSION }}/VSCodium-win32-x64-${{ env.VSCODIUM_VERSION }}.zip" -OutFile vscodium.zip
+          Expand-Archive -Path vscodium.zip -DestinationPath VSCodium-win32-x64
 
-      - name: Build CodeEX
-        env:
-          VSCODE_ARCH: x64
-          OS_NAME: windows
-          SHOULD_BUILD: yes
-          VSCODE_QUALITY: stable
-          RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
-        shell: bash
+      - name: Apply CodeEX Branding
+        shell: pwsh
         run: |
-          cd vscodium
-          ./get_repo.sh
-          ./build.sh
+          # Update product.json
+          $productPath = "VSCodium-win32-x64/resources/app/product.json"
+          $product = Get-Content $productPath | ConvertFrom-Json
+          $product.nameShort = "${{ env.APP_NAME }}"
+          $product.nameLong = "${{ env.PRODUCT_NAME }}"
+          $product.applicationName = "codex"
+          $product.win32AppId = "{{CODEX-AGEIXTIC-IDE}}"
+          $product | ConvertTo-Json -Depth 10 | Set-Content $productPath
+
+      - name: Install Extensions
+        shell: pwsh
+        run: |
+          $extDir = "VSCodium-win32-x64/resources/app/extensions"
+          Get-ChildItem -Path "extensions" -Directory | ForEach-Object {
+            $extName = $_.Name
+            $destPath = Join-Path $extDir $extName
+            Copy-Item -Path $_.FullName -Destination $destPath -Recurse
+            Write-Host "Installed extension: $extName"
+          }
 
       - name: Create Installer
         shell: pwsh
         run: |
-          # Package as zip for now (NSIS installer can be added later)
-          Compress-Archive -Path "vscodium/VSCode-win32-x64/*" -DestinationPath "CodeEX-Ageixtic-IDE-${{ github.event.inputs.version || github.ref_name }}-win-x64.zip"
+          Compress-Archive -Path "VSCodium-win32-x64/*" -DestinationPath "CodeEX-Ageixtic-IDE-${{ env.CODEX_VERSION }}-win-x64.zip"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -307,46 +311,40 @@ jobs:
       - name: Checkout CodeEX
         uses: actions/checkout@v4
 
-      - name: Checkout VSCodium
-        uses: actions/checkout@v4
-        with:
-          repository: VSCodium/vscodium
-          path: vscodium
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install Dependencies
+      - name: Download VSCodium
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libx11-dev libxkbfile-dev libsecret-1-dev rpm jq
+          curl -L -o vscodium.tar.gz "https://github.com/VSCodium/vscodium/releases/download/${{ env.VSCODIUM_VERSION }}/VSCodium-linux-x64-${{ env.VSCODIUM_VERSION }}.tar.gz"
+          mkdir -p VSCodium-linux-x64
+          tar -xzf vscodium.tar.gz -C VSCodium-linux-x64
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Build CodeEX
-        env:
-          VSCODE_ARCH: x64
-          OS_NAME: linux
-          SHOULD_BUILD: yes
-          VSCODE_QUALITY: stable
-          RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
+      - name: Apply CodeEX Branding
         run: |
-          cd vscodium
-          ./get_repo.sh
-          ./build.sh
+          # Update product.json
+          PRODUCT_PATH="VSCodium-linux-x64/resources/app/product.json"
+          jq '.nameShort = "${{ env.APP_NAME }}" | .nameLong = "${{ env.PRODUCT_NAME }}" | .applicationName = "codex"' "$PRODUCT_PATH" > tmp.json && mv tmp.json "$PRODUCT_PATH"
+
+          # Rename binary
+          if [ -f "VSCodium-linux-x64/codium" ]; then
+            mv "VSCodium-linux-x64/codium" "VSCodium-linux-x64/codex"
+          fi
+
+      - name: Install Extensions
+        run: |
+          EXT_DIR="VSCodium-linux-x64/resources/app/extensions"
+
+          for ext in extensions/*/; do
+            if [ -f "$ext/package.json" ]; then
+              ext_name=$(basename "$ext")
+              mkdir -p "$EXT_DIR/$ext_name"
+              cp -r "$ext"/* "$EXT_DIR/$ext_name/"
+              echo "Installed extension: $ext_name"
+            fi
+          done
 
       - name: Create tar.gz
         run: |
-          tar -czvf "CodeEX-Ageixtic-IDE-${{ github.event.inputs.version || github.ref_name }}-linux-x64.tar.gz" \
-            -C vscodium "VSCode-linux-x64"
+          tar -czvf "CodeEX-Ageixtic-IDE-${{ env.CODEX_VERSION }}-linux-x64.tar.gz" \
+            -C . "VSCodium-linux-x64"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -389,4 +387,3 @@ jobs:
 
             ### Verification
             macOS builds are signed with Developer ID and notarized by Apple.
-# Workflow trigger
