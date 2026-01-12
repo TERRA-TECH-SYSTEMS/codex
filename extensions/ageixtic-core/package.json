@@ -1,0 +1,156 @@
+{
+  "name": "ageixtic-core",
+  "displayName": "AGEIXTIC Core",
+  "description": "Core integration for AGEIXTIC AI services in CodeEX",
+  "version": "0.1.0",
+  "publisher": "terratech-systems",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TERRA-TECH-SYSTEMS/codex"
+  },
+  "engines": {
+    "vscode": "*"
+  },
+  "categories": [
+    "Other",
+    "Machine Learning"
+  ],
+  "keywords": [
+    "ageixtic",
+    "ai",
+    "llm",
+    "ollama",
+    "terratech"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "ageixtic.showPanel",
+        "title": "AGEIXTIC: Open AI Panel"
+      },
+      {
+        "command": "ageixtic.askAI",
+        "title": "AGEIXTIC: Ask AI"
+      },
+      {
+        "command": "ageixtic.explainCode",
+        "title": "AGEIXTIC: Explain Selected Code"
+      },
+      {
+        "command": "ageixtic.refactorCode",
+        "title": "AGEIXTIC: Refactor Selected Code"
+      },
+      {
+        "command": "ageixtic.generateDocs",
+        "title": "AGEIXTIC: Generate Documentation"
+      },
+      {
+        "command": "ageixtic.checkConnection",
+        "title": "AGEIXTIC: Check Connection Status"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "ageixtic.explainCode",
+          "when": "editorHasSelection",
+          "group": "ageixtic@1"
+        },
+        {
+          "command": "ageixtic.refactorCode",
+          "when": "editorHasSelection",
+          "group": "ageixtic@2"
+        },
+        {
+          "command": "ageixtic.generateDocs",
+          "when": "editorHasSelection",
+          "group": "ageixtic@3"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "AGEIXTIC",
+      "properties": {
+        "ageixtic.ollamaEndpoint": {
+          "type": "string",
+          "default": "http://localhost:11434",
+          "description": "Ollama API endpoint URL"
+        },
+        "ageixtic.defaultModel": {
+          "type": "string",
+          "default": "llama3.1:8b",
+          "description": "Default LLM model to use"
+        },
+        "ageixtic.cloudEndpoint": {
+          "type": "string",
+          "default": "http://162.250.127.70:11434",
+          "description": "AGEIXTIC Cloud Ollama endpoint"
+        },
+        "ageixtic.useCloud": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use AGEIXTIC Cloud instead of local Ollama"
+        },
+        "ageixtic.maxTokens": {
+          "type": "number",
+          "default": 4096,
+          "description": "Maximum tokens for AI responses"
+        },
+        "ageixtic.temperature": {
+          "type": "number",
+          "default": 0.7,
+          "description": "Temperature for AI responses (0-1)"
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ageixtic",
+          "title": "AGEIXTIC",
+          "icon": "resources/ageixtic-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "ageixtic": [
+        {
+          "type": "webview",
+          "id": "ageixtic.chatPanel",
+          "name": "AI Chat"
+        },
+        {
+          "id": "ageixtic.history",
+          "name": "History"
+        },
+        {
+          "id": "ageixtic.models",
+          "name": "Models"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "ollama": "^0.5.0"
+  }
+}

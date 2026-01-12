@@ -1,0 +1,129 @@
+{
+  "name": "session-protector",
+  "displayName": "Session Protector",
+  "description": "Auto-save and restore workspace sessions, protect against data loss in CodeEX",
+  "version": "0.1.0",
+  "publisher": "terratech-systems",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TERRA-TECH-SYSTEMS/codex"
+  },
+  "engines": {
+    "vscode": "*"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "session",
+    "backup",
+    "restore",
+    "autosave",
+    "protection"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "sessionProtector.saveSession",
+        "title": "Session Protector: Save Current Session"
+      },
+      {
+        "command": "sessionProtector.restoreSession",
+        "title": "Session Protector: Restore Session"
+      },
+      {
+        "command": "sessionProtector.listSessions",
+        "title": "Session Protector: List Saved Sessions"
+      },
+      {
+        "command": "sessionProtector.deleteSession",
+        "title": "Session Protector: Delete Session"
+      },
+      {
+        "command": "sessionProtector.exportSession",
+        "title": "Session Protector: Export Session"
+      },
+      {
+        "command": "sessionProtector.importSession",
+        "title": "Session Protector: Import Session"
+      }
+    ],
+    "configuration": {
+      "title": "Session Protector",
+      "properties": {
+        "sessionProtector.autoSaveEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable automatic session saving"
+        },
+        "sessionProtector.autoSaveInterval": {
+          "type": "number",
+          "default": 5,
+          "description": "Auto-save interval in minutes"
+        },
+        "sessionProtector.maxSessions": {
+          "type": "number",
+          "default": 10,
+          "description": "Maximum number of sessions to keep"
+        },
+        "sessionProtector.saveOnClose": {
+          "type": "boolean",
+          "default": true,
+          "description": "Save session when closing workspace"
+        },
+        "sessionProtector.restoreOnOpen": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically restore last session on workspace open"
+        },
+        "sessionProtector.includeTerminals": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include terminal state in sessions"
+        },
+        "sessionProtector.includeBreakpoints": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include debug breakpoints in sessions"
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "session-protector",
+          "title": "Session Protector",
+          "icon": "resources/session-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "session-protector": [
+        {
+          "id": "sessionProtector.sessions",
+          "name": "Saved Sessions"
+        },
+        {
+          "id": "sessionProtector.current",
+          "name": "Current Session"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.3.0"
+  }
+}
