@@ -366,3 +366,4 @@ jobs:
 
             ### Verification
             macOS builds are signed with Developer ID and notarized by Apple.
+# Workflow trigger
