@@ -1,0 +1,34 @@
+# Build outputs
+dist/
+*.dmg
+*.zip
+*.tar.gz
+*.AppImage
+
+# Source code (large, pulled fresh in CI)
+source-code/
+
+# Node modules
+node_modules/
+out/
+
+# Certificates and secrets (NEVER commit)
+certificates/*.p12
+certificates/*.b64
+*.p12
+*.cer
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Temporary
+tmp/
+temp/

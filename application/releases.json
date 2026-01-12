@@ -1,0 +1,23 @@
+{
+  "product": "CodeEX - Ageixtic IDE",
+  "publisher": "TERRA TECH SYSTEMS",
+  "latest": "0.1.0",
+  "releases": [
+    {
+      "version": "0.1.0",
+      "date": "2026-01-11",
+      "timestamp": "2026-01-11T22:41:00Z",
+      "status": "stable",
+      "platforms": {
+        "darwin-arm64": {
+          "filename": "CodeEX-Ageixtic-IDE-0.1.0-arm64.dmg",
+          "sha256": "c95c212b8efaf619d5e71fbee74af869cbc4196352235650d648ee4253615a9a",
+          "size": 187012502,
+          "signed": true,
+          "notarized": true
+        }
+      },
+      "notes": "Initial release with Ageixtic Core, Quota Manager, and Session Protector extensions."
+    }
+  ]
+}

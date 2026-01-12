@@ -1,0 +1,112 @@
+{
+  "name": "quota-manager",
+  "displayName": "Quota Manager",
+  "description": "Track and manage AI API usage, tokens, and costs for CodeEX",
+  "version": "0.1.0",
+  "publisher": "terratech-systems",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TERRA-TECH-SYSTEMS/codex"
+  },
+  "engines": {
+    "vscode": "*"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "quota",
+    "tokens",
+    "usage",
+    "api",
+    "cost"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "quotaManager.showDashboard",
+        "title": "Quota Manager: Show Dashboard"
+      },
+      {
+        "command": "quotaManager.resetDaily",
+        "title": "Quota Manager: Reset Daily Usage"
+      },
+      {
+        "command": "quotaManager.resetAll",
+        "title": "Quota Manager: Reset All Usage Data"
+      },
+      {
+        "command": "quotaManager.exportData",
+        "title": "Quota Manager: Export Usage Data"
+      }
+    ],
+    "configuration": {
+      "title": "Quota Manager",
+      "properties": {
+        "quotaManager.dailyTokenLimit": {
+          "type": "number",
+          "default": 100000,
+          "description": "Daily token usage limit (0 = unlimited)"
+        },
+        "quotaManager.monthlyTokenLimit": {
+          "type": "number",
+          "default": 3000000,
+          "description": "Monthly token usage limit (0 = unlimited)"
+        },
+        "quotaManager.costPerMillionTokens": {
+          "type": "number",
+          "default": 0,
+          "description": "Estimated cost per million tokens (for cloud APIs, 0 for local)"
+        },
+        "quotaManager.showStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show token usage in status bar"
+        },
+        "quotaManager.warnAtPercentage": {
+          "type": "number",
+          "default": 80,
+          "description": "Show warning when usage reaches this percentage"
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "quota-manager",
+          "title": "Quota Manager",
+          "icon": "resources/quota-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "quota-manager": [
+        {
+          "type": "webview",
+          "id": "quotaManager.dashboard",
+          "name": "Usage Dashboard"
+        },
+        {
+          "id": "quotaManager.sessions",
+          "name": "Recent Sessions"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.3.0"
+  }
+}
