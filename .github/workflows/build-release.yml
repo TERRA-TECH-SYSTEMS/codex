@@ -14,6 +14,8 @@ on:
 env:
   PRODUCT_NAME: "CodeEX - Ageixtic IDE"
   APP_NAME: "CodeEX"
+  VSCODE_QUALITY: stable
+  RELEASE_VERSION: ${{ github.event.inputs.version || '0.1.0' }}
 
 jobs:
   build-macos-arm64:
@@ -41,11 +43,17 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Install Dependencies
+        run: |
+          brew install jq
+
       - name: Build CodeEX
         env:
           VSCODE_ARCH: arm64
           OS_NAME: osx
           SHOULD_BUILD: yes
+          VSCODE_QUALITY: stable
+          RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
         run: |
           cd vscodium
           ./get_repo.sh
@@ -151,11 +159,17 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Install Dependencies
+        run: |
+          brew install jq
+
       - name: Build CodeEX
         env:
           VSCODE_ARCH: x64
           OS_NAME: osx
           SHOULD_BUILD: yes
+          VSCODE_QUALITY: stable
+          RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
         run: |
           cd vscodium
           ./get_repo.sh
@@ -257,11 +271,18 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Install Dependencies
+        shell: bash
+        run: |
+          choco install jq -y
+
       - name: Build CodeEX
         env:
           VSCODE_ARCH: x64
           OS_NAME: windows
           SHOULD_BUILD: yes
+          VSCODE_QUALITY: stable
+          RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
         shell: bash
         run: |
           cd vscodium
@@ -305,7 +326,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libx11-dev libxkbfile-dev libsecret-1-dev rpm
+          sudo apt-get install -y libx11-dev libxkbfile-dev libsecret-1-dev rpm jq
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -315,6 +336,8 @@ jobs:
           VSCODE_ARCH: x64
           OS_NAME: linux
           SHOULD_BUILD: yes
+          VSCODE_QUALITY: stable
+          RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
         run: |
           cd vscodium
           ./get_repo.sh
