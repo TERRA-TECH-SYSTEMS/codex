@@ -11,15 +11,15 @@ on:
         required: true
         default: '0.1.0'
       vscodium_version:
-        description: 'VSCodium version to base on (e.g., 1.96.2.25012)'
+        description: 'VSCodium version to base on (e.g., 1.107.18627)'
         required: true
-        default: '1.96.2.25012'
+        default: '1.107.18627'
 
 env:
   PRODUCT_NAME: "CodeEX - Ageixtic IDE"
   APP_NAME: "CodeEX"
   CODEX_VERSION: ${{ github.event.inputs.version || '0.1.0' }}
-  VSCODIUM_VERSION: ${{ github.event.inputs.vscodium_version || '1.96.2.25012' }}
+  VSCODIUM_VERSION: ${{ github.event.inputs.vscodium_version || '1.107.18627' }}
 
 jobs:
   build-macos-arm64:
