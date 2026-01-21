@@ -336,16 +336,97 @@ jobs:
             Write-Host "Installed extension: $extName"
           }
 
-      - name: Create Installer
+      - name: Create Inno Setup Script
         shell: pwsh
         run: |
-          Compress-Archive -Path "VSCodium-win32-x64/*" -DestinationPath "CodeEX-Ageixtic-IDE-${{ env.CODEX_VERSION }}-win-x64.zip"
+          $issContent = @"
+          [Setup]
+          AppId={{CODEX-AGEIXTIC-IDE}
+          AppName=${{ env.APP_NAME }}
+          AppVersion=${{ env.CODEX_VERSION }}
+          AppPublisher=TerraTech Systems
+          AppPublisherURL=https://terratech.systems
+          AppSupportURL=https://github.com/TERRA-TECH-SYSTEMS/codex
+          DefaultDirName={autopf}\${{ env.APP_NAME }}
+          DefaultGroupName=${{ env.APP_NAME }}
+          DisableProgramGroupPage=yes
+          OutputDir=.
+          OutputBaseFilename=CodeEX-Ageixtic-IDE-${{ env.CODEX_VERSION }}-win-x64-setup
+          Compression=lzma2/ultra64
+          SolidCompression=yes
+          WizardStyle=modern
+          PrivilegesRequired=lowest
+          PrivilegesRequiredOverridesAllowed=dialog
+          ArchitecturesAllowed=x64compatible
+          ArchitecturesInstallIn64BitMode=x64compatible
+          UninstallDisplayIcon={app}\CodeEX.exe
+          SetupIconFile=VSCodium-win32-x64\resources\app\resources\win32\code.ico
+
+          [Languages]
+          Name: "english"; MessagesFile: "compiler:Default.isl"
+
+          [Tasks]
+          Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+          Name: "addcontextmenufiles"; Description: "Add ""Open with ${{ env.APP_NAME }}"" to file context menu"; GroupDescription: "Other:"; Flags: unchecked
+          Name: "addcontextmenufolders"; Description: "Add ""Open with ${{ env.APP_NAME }}"" to folder context menu"; GroupDescription: "Other:"; Flags: unchecked
+          Name: "addtopath"; Description: "Add to PATH"; GroupDescription: "Other:"; Flags: unchecked
+
+          [Files]
+          Source: "VSCodium-win32-x64\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+          [Icons]
+          Name: "{group}\${{ env.APP_NAME }}"; Filename: "{app}\CodeEX.exe"
+          Name: "{group}\{cm:UninstallProgram,${{ env.APP_NAME }}}"; Filename: "{uninstallexe}"
+          Name: "{autodesktop}\${{ env.APP_NAME }}"; Filename: "{app}\CodeEX.exe"; Tasks: desktopicon
+
+          [Registry]
+          Root: HKCU; Subkey: "Software\Classes\*\shell\${{ env.APP_NAME }}"; ValueType: string; ValueName: ""; ValueData: "Open with ${{ env.APP_NAME }}"; Tasks: addcontextmenufiles; Flags: uninsdeletekey
+          Root: HKCU; Subkey: "Software\Classes\*\shell\${{ env.APP_NAME }}"; ValueType: string; ValueName: "Icon"; ValueData: "{app}\CodeEX.exe"; Tasks: addcontextmenufiles
+          Root: HKCU; Subkey: "Software\Classes\*\shell\${{ env.APP_NAME }}\command"; ValueType: string; ValueName: ""; ValueData: """{app}\CodeEX.exe"" ""%1"""; Tasks: addcontextmenufiles
+          Root: HKCU; Subkey: "Software\Classes\Directory\shell\${{ env.APP_NAME }}"; ValueType: string; ValueName: ""; ValueData: "Open with ${{ env.APP_NAME }}"; Tasks: addcontextmenufolders; Flags: uninsdeletekey
+          Root: HKCU; Subkey: "Software\Classes\Directory\shell\${{ env.APP_NAME }}"; ValueType: string; ValueName: "Icon"; ValueData: "{app}\CodeEX.exe"; Tasks: addcontextmenufolders
+          Root: HKCU; Subkey: "Software\Classes\Directory\shell\${{ env.APP_NAME }}\command"; ValueType: string; ValueName: ""; ValueData: """{app}\CodeEX.exe"" ""%V"""; Tasks: addcontextmenufolders
+          Root: HKCU; Subkey: "Software\Classes\Directory\Background\shell\${{ env.APP_NAME }}"; ValueType: string; ValueName: ""; ValueData: "Open with ${{ env.APP_NAME }}"; Tasks: addcontextmenufolders; Flags: uninsdeletekey
+          Root: HKCU; Subkey: "Software\Classes\Directory\Background\shell\${{ env.APP_NAME }}"; ValueType: string; ValueName: "Icon"; ValueData: "{app}\CodeEX.exe"; Tasks: addcontextmenufolders
+          Root: HKCU; Subkey: "Software\Classes\Directory\Background\shell\${{ env.APP_NAME }}\command"; ValueType: string; ValueName: ""; ValueData: """{app}\CodeEX.exe"" ""%V"""; Tasks: addcontextmenufolders
+          Root: HKCU; Subkey: "Environment"; ValueType: expandsz; ValueName: "Path"; ValueData: "{olddata};{app}\bin"; Tasks: addtopath; Check: NeedsAddPath('{app}\bin')
+
+          [Run]
+          Filename: "{app}\CodeEX.exe"; Description: "{cm:LaunchProgram,${{ env.APP_NAME }}}"; Flags: nowait postinstall skipifsilent
+
+          [Code]
+          function NeedsAddPath(Param: string): boolean;
+          var
+            OrigPath: string;
+          begin
+            if not RegQueryStringValue(HKEY_CURRENT_USER, 'Environment', 'Path', OrigPath) then
+            begin
+              Result := True;
+              exit;
+            end;
+            Result := Pos(';' + Param + ';', ';' + OrigPath + ';') = 0;
+          end;
+          "@
+          $issContent | Out-File -FilePath "codex-setup.iss" -Encoding UTF8
+
+      - name: Build Installer with Inno Setup
+        shell: pwsh
+        run: |
+          # Inno Setup is pre-installed on windows-latest
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" codex-setup.iss
+
+      - name: Also Create Zip (portable)
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "VSCodium-win32-x64/*" -DestinationPath "CodeEX-Ageixtic-IDE-${{ env.CODEX_VERSION }}-win-x64-portable.zip"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: CodeEX-windows-x64
-          path: CodeEX-Ageixtic-IDE-*-win-x64.zip
+          path: |
+            CodeEX-Ageixtic-IDE-*-win-x64-setup.exe
+            CodeEX-Ageixtic-IDE-*-win-x64-portable.zip
 
   build-linux:
     runs-on: ubuntu-latest
@@ -440,7 +521,8 @@ jobs:
             ### Downloads
             - **macOS Apple Silicon**: CodeEX-Ageixtic-IDE-${{ env.CODEX_VERSION }}-arm64.dmg
             - **macOS Intel**: CodeEX-Ageixtic-IDE-${{ env.CODEX_VERSION }}-x64.dmg
-            - **Windows x64**: CodeEX-Ageixtic-IDE-${{ env.CODEX_VERSION }}-win-x64.zip
+            - **Windows x64 Installer**: CodeEX-Ageixtic-IDE-${{ env.CODEX_VERSION }}-win-x64-setup.exe
+            - **Windows x64 Portable**: CodeEX-Ageixtic-IDE-${{ env.CODEX_VERSION }}-win-x64-portable.zip
             - **Linux x64**: CodeEX-Ageixtic-IDE-${{ env.CODEX_VERSION }}-linux-x64.tar.gz
 
             ### Included Extensions
