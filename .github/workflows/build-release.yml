@@ -288,6 +288,16 @@ jobs:
           $product.win32AppId = "{{CODEX-AGEIXTIC-IDE}}"
           $product | ConvertTo-Json -Depth 10 | Set-Content $productPath
 
+          # Rename executable
+          Rename-Item -Path "VSCodium-win32-x64/VSCodium.exe" -NewName "CodeEX.exe"
+
+          # Update manifest file
+          $manifestPath = "VSCodium-win32-x64/VSCodium.VisualElementsManifest.xml"
+          if (Test-Path $manifestPath) {
+            (Get-Content $manifestPath) -replace 'VSCodium', '${{ env.APP_NAME }}' | Set-Content $manifestPath
+            Rename-Item -Path $manifestPath -NewName "CodeEX.VisualElementsManifest.xml"
+          }
+
       - name: Install Extensions
         shell: pwsh
         run: |
