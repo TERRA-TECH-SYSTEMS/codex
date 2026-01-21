@@ -279,13 +279,40 @@ jobs:
       - name: Apply CodeEX Branding
         shell: pwsh
         run: |
-          # Update product.json
+          # Update product.json with ALL branding fields
           $productPath = "VSCodium-win32-x64/resources/app/product.json"
           $product = Get-Content $productPath | ConvertFrom-Json
+
+          # Core branding
           $product.nameShort = "${{ env.APP_NAME }}"
           $product.nameLong = "${{ env.PRODUCT_NAME }}"
           $product.applicationName = "codex"
+          $product.dataFolderName = ".codex"
+
+          # Windows-specific branding
+          $product.win32MutexName = "codex"
+          $product.win32DirName = "${{ env.APP_NAME }}"
+          $product.win32NameVersion = "${{ env.APP_NAME }}"
+          $product.win32RegValueName = "${{ env.APP_NAME }}"
           $product.win32AppId = "{{CODEX-AGEIXTIC-IDE}}"
+          $product.win32x64AppId = "{{CODEX-AGEIXTIC-IDE-X64}}"
+          $product.win32arm64AppId = "{{CODEX-AGEIXTIC-IDE-ARM64}}"
+          $product.win32x64UserAppId = "{{CODEX-AGEIXTIC-IDE-X64-USER}}"
+          $product.win32arm64UserAppId = "{{CODEX-AGEIXTIC-IDE-ARM64-USER}}"
+          $product.win32AppUserModelId = "TerraTech.${{ env.APP_NAME }}"
+          $product.win32ShellNameShort = "${{ env.APP_NAME }}"
+          $product.win32TunnelServiceMutex = "codex-tunnelservice"
+          $product.win32TunnelMutex = "codex-tunnel"
+
+          # Server branding
+          $product.serverApplicationName = "codex-server"
+          $product.serverDataFolderName = ".codex-server"
+          $product.tunnelApplicationName = "codex-tunnel"
+
+          # Darwin/Linux branding (for consistency)
+          $product.darwinBundleIdentifier = "com.terratech.codex"
+          $product.linuxIconName = "codex"
+
           $product | ConvertTo-Json -Depth 10 | Set-Content $productPath
 
           # Rename executable
@@ -334,9 +361,27 @@ jobs:
 
       - name: Apply CodeEX Branding
         run: |
-          # Update product.json
+          # Update product.json with ALL branding fields
           PRODUCT_PATH="VSCodium-linux-x64/resources/app/product.json"
-          jq '.nameShort = "${{ env.APP_NAME }}" | .nameLong = "${{ env.PRODUCT_NAME }}" | .applicationName = "codex"' "$PRODUCT_PATH" > tmp.json && mv tmp.json "$PRODUCT_PATH"
+          jq '
+            .nameShort = "${{ env.APP_NAME }}" |
+            .nameLong = "${{ env.PRODUCT_NAME }}" |
+            .applicationName = "codex" |
+            .dataFolderName = ".codex" |
+            .serverApplicationName = "codex-server" |
+            .serverDataFolderName = ".codex-server" |
+            .tunnelApplicationName = "codex-tunnel" |
+            .darwinBundleIdentifier = "com.terratech.codex" |
+            .linuxIconName = "codex" |
+            .win32MutexName = "codex" |
+            .win32DirName = "${{ env.APP_NAME }}" |
+            .win32NameVersion = "${{ env.APP_NAME }}" |
+            .win32RegValueName = "${{ env.APP_NAME }}" |
+            .win32AppUserModelId = "TerraTech.${{ env.APP_NAME }}" |
+            .win32ShellNameShort = "${{ env.APP_NAME }}" |
+            .win32TunnelServiceMutex = "codex-tunnelservice" |
+            .win32TunnelMutex = "codex-tunnel"
+          ' "$PRODUCT_PATH" > tmp.json && mv tmp.json "$PRODUCT_PATH"
 
           # Rename binary
           if [ -f "VSCodium-linux-x64/codium" ]; then
