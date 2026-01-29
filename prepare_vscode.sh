@@ -258,21 +258,21 @@ if [[ "${OS_NAME}" == "linux" ]]; then
   # code.appdata.xml
   sed -i 's|Visual Studio Code|CodeEX|g' resources/linux/code.appdata.xml
   sed -i 's|https://code.visualstudio.com/docs/setup/linux|https://github.com/TERRA-TECH-SYSTEMS/codex#download-install|' resources/linux/code.appdata.xml
-  sed -i 's|https://code.visualstudio.com/home/home-screenshot-linux-lg.png|https://vscodium.com/img/vscodium.png|' resources/linux/code.appdata.xml
-  sed -i 's|https://code.visualstudio.com|https://vscodium.com|' resources/linux/code.appdata.xml
+  sed -i 's|https://code.visualstudio.com/home/home-screenshot-linux-lg.png|https://github.com/TERRA-TECH-SYSTEMS/codex/img/vscodium.png|' resources/linux/code.appdata.xml
+  sed -i 's|https://code.visualstudio.com|https://github.com/TERRA-TECH-SYSTEMS/codex|' resources/linux/code.appdata.xml
 
   # control.template
   sed -i 's|Microsoft Corporation <vscode-linux@microsoft.com>|TerraTech Systems https://github.com/TERRA-TECH-SYSTEMS/codex/graphs/contributors|'  resources/linux/debian/control.template
   sed -i 's|Visual Studio Code|CodeEX|g' resources/linux/debian/control.template
   sed -i 's|https://code.visualstudio.com/docs/setup/linux|https://github.com/TERRA-TECH-SYSTEMS/codex#download-install|' resources/linux/debian/control.template
-  sed -i 's|https://code.visualstudio.com|https://vscodium.com|' resources/linux/debian/control.template
+  sed -i 's|https://code.visualstudio.com|https://github.com/TERRA-TECH-SYSTEMS/codex|' resources/linux/debian/control.template
 
   # code.spec.template
   sed -i 's|Microsoft Corporation|TerraTech Systems|' resources/linux/rpm/code.spec.template
   sed -i 's|Visual Studio Code Team <vscode-linux@microsoft.com>|TerraTech Systems https://github.com/TERRA-TECH-SYSTEMS/codex/graphs/contributors|' resources/linux/rpm/code.spec.template
   sed -i 's|Visual Studio Code|CodeEX|' resources/linux/rpm/code.spec.template
   sed -i 's|https://code.visualstudio.com/docs/setup/linux|https://github.com/TERRA-TECH-SYSTEMS/codex#download-install|' resources/linux/rpm/code.spec.template
-  sed -i 's|https://code.visualstudio.com|https://vscodium.com|' resources/linux/rpm/code.spec.template
+  sed -i 's|https://code.visualstudio.com|https://github.com/TERRA-TECH-SYSTEMS/codex|' resources/linux/rpm/code.spec.template
 
   # snapcraft.yaml
   sed -i 's|Visual Studio Code|CodeEX|'  resources/linux/rpm/code.spec.template
