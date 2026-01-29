@@ -73,6 +73,7 @@ jobs:
           done
 
       - name: Import Code Signing Certificate
+        if: ${{ secrets.MACOS_CERTIFICATE != '' }}
         env:
           MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
           MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
@@ -86,6 +87,7 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PWD" build.keychain
 
       - name: Sign Application
+        if: ${{ secrets.MACOS_CERTIFICATE != '' }}
         env:
           CERT_NAME: "Developer ID Application: TERRA TECH SYSTEMS (V2F8RR8GSR)"
         run: |
@@ -131,6 +133,7 @@ jobs:
             "CodeEX-Ageixtic-IDE-${{ env.CODEX_VERSION }}-arm64.dmg"
 
       - name: Notarize DMG
+        if: ${{ secrets.APPLE_APP_PASSWORD != '' }}
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -151,7 +154,7 @@ jobs:
           path: CodeEX-Ageixtic-IDE-*-arm64.dmg
 
   build-macos-x64:
-    runs-on: macos-15
+    runs-on: macos-13
     steps:
       - name: Checkout CodeEX
         uses: actions/checkout@v4
@@ -192,6 +195,7 @@ jobs:
           done
 
       - name: Import Code Signing Certificate
+        if: ${{ secrets.MACOS_CERTIFICATE != '' }}
         env:
           MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
           MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
@@ -205,6 +209,7 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PWD" build.keychain
 
       - name: Sign Application
+        if: ${{ secrets.MACOS_CERTIFICATE != '' }}
         env:
           CERT_NAME: "Developer ID Application: TERRA TECH SYSTEMS (V2F8RR8GSR)"
         run: |
@@ -245,6 +250,7 @@ jobs:
             "CodeEX-Ageixtic-IDE-${{ env.CODEX_VERSION }}-x64.dmg"
 
       - name: Notarize DMG
+        if: ${{ secrets.APPLE_APP_PASSWORD != '' }}
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
