@@ -82,6 +82,57 @@ export function App() {
   const [cursorLine, setCursorLine] = createSignal(1);
   const [editorMaxLine, setEditorMaxLine] = createSignal(1);
 
+  // ── Split Editor Groups ──────────────────────────────────────────────
+  // Each group has its own open files and active file. Group 0 is the primary.
+  interface EditorGroup {
+    id: number;
+    openFiles: string[];
+    activeFile: string | null;
+  }
+  let nextGroupId = 1;
+  const [editorGroups, setEditorGroups] = createSignal<EditorGroup[]>([
+    { id: 0, openFiles: [], activeFile: null },
+  ]);
+  const [activeGroupId, setActiveGroupId] = createSignal(0);
+
+  // Sync primary group with the legacy openFiles/activeFile signals
+  createEffect(() => {
+    const groups = editorGroups();
+    const primary = groups[0];
+    if (primary) {
+      setOpenFiles(primary.openFiles);
+      setActiveFile(primary.activeFile);
+    }
+  });
+
+  /** Update a specific editor group. */
+  const updateGroup = (groupId: number, updater: (g: EditorGroup) => EditorGroup) => {
+    setEditorGroups((prev) => prev.map((g) => g.id === groupId ? updater(g) : g));
+  };
+
+  /** Split the active file into a new editor group. */
+  const splitEditor = () => {
+    const file = activeFile();
+    if (!file) return;
+    const newId = nextGroupId++;
+    setEditorGroups((prev) => [
+      ...prev,
+      { id: newId, openFiles: [file], activeFile: file },
+    ]);
+    setActiveGroupId(newId);
+  };
+
+  /** Close an editor group (cannot close last group). */
+  const closeGroup = (groupId: number) => {
+    const groups = editorGroups();
+    if (groups.length <= 1) return;
+    setEditorGroups((prev) => prev.filter((g) => g.id !== groupId));
+    if (activeGroupId() === groupId) {
+      const remaining = editorGroups();
+      setActiveGroupId(remaining[0]?.id ?? 0);
+    }
+  };
+
   // Recently closed tab stack for Ctrl+Shift+T undo
   const closedTabs: string[] = [];
 
@@ -184,6 +235,11 @@ export function App() {
       e.preventDefault();
       const last = closedTabs.pop();
       if (last) openFile(last);
+    }
+    // Ctrl+\ — Split Editor
+    if (e.ctrlKey && e.key === "\\") {
+      e.preventDefault();
+      splitEditor();
     }
     // Ctrl+= / Ctrl+- / Ctrl+0 — Zoom
     if (e.ctrlKey && (e.key === "=" || e.key === "+")) {
@@ -441,29 +497,53 @@ export function App() {
     }));
   });
 
-  const openFile = (path: string) => {
-    if (!openFiles().includes(path)) {
-      setOpenFiles((prev) => [...prev, path]);
-    }
+  /** Open a file in the active editor group (or specific group). */
+  const openFile = (path: string, targetGroupId?: number) => {
+    const gid = targetGroupId ?? activeGroupId();
+    updateGroup(gid, (g) => ({
+      ...g,
+      openFiles: g.openFiles.includes(path) ? g.openFiles : [...g.openFiles, path],
+      activeFile: path,
+    }));
+    // Also update legacy signals for backwards compat (status bar, etc.)
+    if (!openFiles().includes(path)) setOpenFiles((prev) => [...prev, path]);
     setActiveFile(path);
+    setActiveGroupId(gid);
     setDebugActiveFile(path);
 
-    // Fire activation event for language-based extension activation
     const ext = path.split(".").pop()?.toLowerCase() ?? "";
     const langMap: Record<string, string> = { ts: "typescript", tsx: "typescriptreact", js: "javascript", jsx: "javascriptreact", py: "python", rs: "rust", go: "go", java: "java", c: "c", cpp: "cpp", json: "json", md: "markdown", html: "html", css: "css" };
     const lang = langMap[ext];
     if (lang) fireActivationEvent(`onLanguage:${lang}`);
   };
 
-  const closeFile = (path: string) => {
+  /** Close a file in the active group (or specific group). */
+  const closeFile = (path: string, targetGroupId?: number) => {
     closedTabs.push(path);
     if (closedTabs.length > 20) closedTabs.shift();
+
+    const gid = targetGroupId ?? activeGroupId();
+    updateGroup(gid, (g) => {
+      const remaining = g.openFiles.filter((f) => f !== path);
+      return {
+        ...g,
+        openFiles: remaining,
+        activeFile: g.activeFile === path
+          ? (remaining.length > 0 ? remaining[remaining.length - 1] : null)
+          : g.activeFile,
+      };
+    });
+    // Update legacy signals
     setOpenFiles((prev) => prev.filter((f) => f !== path));
     if (activeFile() === path) {
       const remaining = openFiles().filter((f) => f !== path);
       setActiveFile(remaining.length > 0 ? remaining[remaining.length - 1] : null);
     }
-    // Notify LSP of document close
+    // Auto-close empty groups (except the primary group 0)
+    const group = editorGroups().find((g) => g.id === gid);
+    if (group && group.openFiles.length === 0 && gid !== 0) {
+      closeGroup(gid);
+    }
     document.dispatchEvent(new CustomEvent("codex:file-closed", { detail: { path } }));
   };
 
@@ -501,16 +581,43 @@ export function App() {
         </Show>
 
         <div class="editor-terminal-column" role="region" aria-label="Editor">
-          <AppErrorBoundary name="Editor">
-            <EditorArea
-              openFiles={openFiles()}
-              activeFile={activeFile()}
-              onSelectFile={setActiveFile}
-              onCloseFile={closeFile}
-              onOpenFile={openFile}
-              onReorderFiles={setOpenFiles}
-            />
-          </AppErrorBoundary>
+          <div class="editor-groups-row">
+            <For each={editorGroups()}>
+              {(group, idx) => (
+                <>
+                  <Show when={idx() > 0}>
+                    <ResizeHandle direction="horizontal" onResize={() => {}} />
+                  </Show>
+                  <div
+                    class={`editor-group ${activeGroupId() === group.id ? "active-group" : ""}`}
+                    onClick={() => setActiveGroupId(group.id)}
+                  >
+                    <AppErrorBoundary name="Editor">
+                      <EditorArea
+                        openFiles={group.openFiles}
+                        activeFile={group.activeFile}
+                        onSelectFile={(file) => {
+                          updateGroup(group.id, (g) => ({ ...g, activeFile: file }));
+                          setActiveFile(file);
+                          setActiveGroupId(group.id);
+                        }}
+                        onCloseFile={(file) => closeFile(file, group.id)}
+                        onOpenFile={(file) => openFile(file, group.id)}
+                        onReorderFiles={(files) => updateGroup(group.id, (g) => ({ ...g, openFiles: files }))}
+                      />
+                    </AppErrorBoundary>
+                    <Show when={editorGroups().length > 1}>
+                      <button
+                        class="editor-group-close"
+                        title="Close editor group"
+                        onClick={(e) => { e.stopPropagation(); closeGroup(group.id); }}
+                      >&times;</button>
+                    </Show>
+                  </div>
+                </>
+              )}
+            </For>
+          </div>
           <Show when={terminalVisible()}>
             <ResizeHandle
               direction="vertical"

@@ -37,6 +37,7 @@ export async function getTerraForgeStatus(): Promise<TerraForgeStatus> {
       id: m.id ?? m.name,
       size: m.size,
       digest: m.digest,
+      status: m.status,
     }));
     return { available: true, host: terraforgeHost, models };
   } catch {

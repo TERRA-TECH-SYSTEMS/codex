@@ -8,7 +8,7 @@
 
 import { createSignal, createMemo, For, Show, onMount, onCleanup } from "solid-js";
 import { marked } from "marked";
-import { streamChat } from "~/lib/terraforge-client";
+import { streamChat, getTerraForgeStatus } from "~/lib/terraforge-client";
 import { notify } from "~/lib/notifications";
 import { buildAgeixtSystemPrompt, parseToolCalls, executeTool, applyEdit, checkDestructive, clearAgeixtTodos, setAgeixtModel } from "~/lib/agent-tools";
 import { TodoPanel } from "./TodoPanel";
@@ -48,6 +48,11 @@ Your identity:
 
 Keep responses focused and technical. Use code blocks with syntax highlighting. Be helpful without being verbose.`;
 
+interface TFModel {
+  id: string;
+  status: "loaded" | "unloaded" | "unknown";
+}
+
 export function ChatPanel() {
   const [messages, setMessages] = createSignal<ChatMessage[]>([]);
   const [inputText, setInputText] = createSignal("");
@@ -55,6 +60,10 @@ export function ChatPanel() {
   const [model, setModel] = createSignal("gixsis-v4.0.1");
   const [agentMode, setAgentMode] = createSignal(false);
   const [toolResults, setToolResults] = createSignal<Map<string, ToolResult[]>>(new Map());
+  // Dynamic model list from TerraForge
+  const [availableModels, setAvailableModels] = createSignal<TFModel[]>([
+    { id: "gixsis-v4.0.1", status: "unknown" },
+  ]);
   // STT state
   const [sttActive, setSTTActive] = createSignal(false);
   const [sttInterim, setSTTInterim] = createSignal("");
@@ -67,6 +76,36 @@ export function ChatPanel() {
   const [mcpToolCount, setMCPToolCount] = createSignal(0);
   // Permission gate state
   const [pendingApproval, setPendingApproval] = createSignal<{ command: string; resolve: (ok: boolean) => void } | null>(null);
+
+  /** Display name for the currently selected model. */
+  const modelDisplayName = () => {
+    const m = model();
+    // Short friendly names
+    if (m === "gixsis-v4.0.1") return "Gixsis v4.0.1";
+    if (m === "gixsis-code-32b") return "Gixsis Code 32B";
+    return m; // show raw ID for any other model
+  };
+
+  /** Fetch available models from TerraForge on mount. */
+  const fetchModels = async () => {
+    try {
+      const res = await getTerraForgeStatus();
+      if (res.available && res.models.length > 0) {
+        const models: TFModel[] = res.models.map((m: any) => ({
+          id: m.id ?? m.name,
+          status: (m as any).status?.value === "loaded" ? "loaded" as const : "unloaded" as const,
+        }));
+        setAvailableModels(models);
+        // If current model not in list, select first loaded or first available
+        const ids = models.map((m) => m.id);
+        if (!ids.includes(model())) {
+          const loaded = models.find((m) => m.status === "loaded");
+          setModel(loaded?.id ?? models[0].id);
+          setAgeixtModel(loaded?.id ?? models[0].id);
+        }
+      }
+    } catch { /* TerraForge unreachable — keep defaults */ }
+  };
 
   /** Show an inline approval prompt for destructive commands. Returns true if approved. */
   const requestApproval = (command: string): Promise<boolean> => {
@@ -453,6 +492,9 @@ export function ChatPanel() {
     document.addEventListener("keydown", handleSTTShortcut);
     document.addEventListener("codex:upload-file", handleUploadEvent);
 
+    // Fetch available models from TerraForge
+    fetchModels();
+
     // Connect to MCP server in background (non-blocking)
     connectWithRetry(
       (session) => {
@@ -478,19 +520,22 @@ export function ChatPanel() {
     <div class="chat-panel">
       <div class="chat-header">
         <div class="chat-header-left">
-          <span class="chat-header-icon">G</span>
-          <span class="chat-header-title">Gixsis</span>
+          <span class={`chat-header-icon ${agentMode() ? "ageixt" : ""}`}>{agentMode() ? "A" : "G"}</span>
+          <span class="chat-header-title">{agentMode() ? "Ageixt" : "Chat"}</span>
+          <span class="chat-header-model">{modelDisplayName()}</span>
         </div>
         <div class="chat-header-right">
           <button
             class={`chat-mode-btn ${!agentMode() ? "active" : ""}`}
             onClick={() => setAgentMode(false)}
+            title="Standard chat mode"
           >
             Chat
           </button>
           <button
             class={`chat-mode-btn ${agentMode() ? "active" : ""}`}
             onClick={() => setAgentMode(true)}
+            title="Agent mode with tool calling"
           >
             Ageixt
           </button>
@@ -503,27 +548,36 @@ export function ChatPanel() {
             value={model()}
             onChange={(e) => { setModel(e.currentTarget.value); setAgeixtModel(e.currentTarget.value); }}
           >
-            <option value="gixsis-v4.0.1">Gixsis v4.0.1 (8B)</option>
-            <option value="gixsis-code-32b">Gixsis Code (32B)</option>
+            <For each={availableModels()}>
+              {(m) => (
+                <option value={m.id}>
+                  {m.id}{m.status === "loaded" ? " \u25CF" : m.status === "unloaded" ? " \u25CB" : ""}
+                </option>
+              )}
+            </For>
           </select>
+          <button
+            class="model-refresh-btn"
+            title="Refresh model list"
+            onClick={fetchModels}
+          >
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M13.65 2.35A8 8 0 1016 8h-2a6 6 0 11-1.76-4.24L10 6h6V0l-2.35 2.35z"/></svg>
+          </button>
         </div>
       </div>
 
       <div class="chat-messages">
         <Show when={messages().length === 0}>
           <div class="chat-empty">
-            <div class="chat-empty-icon">G</div>
-            <div class="chat-empty-title">Gixsis</div>
+            <div class={`chat-empty-icon ${agentMode() ? "ageixt" : ""}`}>{agentMode() ? "A" : "G"}</div>
+            <div class="chat-empty-title">{agentMode() ? "Ageixt Mode" : "Gixsis Chat"}</div>
             <div class="chat-empty-subtitle">
-              Sovereign AI assistant by TerraTech Systems.
-              <br />
-              Running on TerraForge Engine.
+              <Show when={agentMode()} fallback={
+                <>Sovereign AI assistant by TerraTech Systems.<br />Model: {modelDisplayName()}</>
+              }>
+                Agent mode with tool calling enabled.<br />Model: {modelDisplayName()} — {mcpConnected() ? `${mcpToolCount()} tools connected` : "MCP disconnected"}
+              </Show>
             </div>
-            <Show when={agentMode()}>
-              <div class="chat-agent-badge">
-                Ageixt Mode — Tool calling enabled
-              </div>
-            </Show>
           </div>
         </Show>
 
@@ -713,25 +767,35 @@ export function ChatPanel() {
           display: flex;
           flex-direction: column;
           position: relative;
+          min-width: 0;
+          overflow: hidden;
         }
         .chat-header {
           height: var(--tab-height);
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 0 var(--space-3);
+          padding: 0 var(--space-2);
           border-bottom: 1px solid var(--border-subtle);
           background: var(--bg-surface);
+          flex-shrink: 0;
+          min-width: 0;
+          overflow: hidden;
+          gap: var(--space-1);
         }
         .chat-header-left {
           display: flex;
           align-items: center;
-          gap: var(--space-2);
+          gap: var(--space-1);
+          min-width: 0;
+          overflow: hidden;
+          flex-shrink: 1;
         }
         .chat-header-right {
           display: flex;
           align-items: center;
-          gap: var(--space-2);
+          gap: var(--space-1);
+          flex-shrink: 0;
         }
         .chat-header-icon {
           width: 22px;
@@ -746,10 +810,28 @@ export function ChatPanel() {
           font-size: var(--text-xs);
           font-weight: 700;
         }
+        .chat-header-icon.ageixt {
+          background: linear-gradient(135deg, var(--accent-green), var(--accent-teal, #64d2ff));
+        }
         .chat-header-title {
           font-size: var(--text-sm);
           font-weight: 600;
           color: var(--text-primary);
+          white-space: nowrap;
+          flex-shrink: 0;
+        }
+        .chat-header-model {
+          font-size: 10px;
+          font-weight: 500;
+          color: var(--text-tertiary);
+          background: var(--bg-elevated);
+          padding: 1px 6px;
+          border-radius: var(--radius-sm);
+          border: 1px solid var(--border-subtle);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 120px;
         }
         .chat-mode-btn {
           height: 24px;
@@ -871,13 +953,29 @@ export function ChatPanel() {
           border-radius: var(--radius-sm);
           color: var(--text-secondary);
           font-family: var(--font-ui);
-          font-size: var(--text-xs);
-          padding: 2px 6px;
+          font-size: 10px;
+          padding: 2px 4px;
           outline: none;
           cursor: pointer;
+          max-width: 140px;
         }
         .model-select:focus {
           border-color: var(--accent-purple);
+        }
+        .model-refresh-btn {
+          background: transparent;
+          border: none;
+          color: var(--text-tertiary);
+          cursor: pointer;
+          padding: 2px;
+          display: flex;
+          align-items: center;
+          border-radius: var(--radius-sm);
+          transition: all var(--duration-fast) var(--ease-out);
+        }
+        .model-refresh-btn:hover {
+          color: var(--text-primary);
+          background: var(--bg-hover);
         }
         .chat-messages {
           flex: 1;
@@ -908,6 +1006,10 @@ export function ChatPanel() {
           font-weight: 700;
           color: white;
           box-shadow: var(--glow-purple);
+        }
+        .chat-empty-icon.ageixt {
+          background: linear-gradient(135deg, var(--accent-green), var(--accent-teal, #64d2ff));
+          box-shadow: 0 0 20px rgba(48, 209, 88, 0.3);
         }
         .chat-empty-title {
           font-size: var(--text-xl);

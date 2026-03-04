@@ -17,6 +17,7 @@
   flex: 1;
   display: flex;
   overflow: hidden;
+  min-width: 0;
 }
 
 /* Smooth width/height transitions for resizable panels (keyboard/programmatic resize).
@@ -24,6 +25,8 @@
 .app-body > div[style*="width"] {
   transition: width 150ms var(--ease-out);
   will-change: auto;
+  min-width: 0;
+  overflow: hidden;
 }
 html.panel-resizing .app-body > div[style*="width"] {
   transition: none;
@@ -34,8 +37,63 @@ html.panel-resizing .app-body > div[style*="width"] {
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  min-width: 200px;
   overflow: hidden;
+}
+
+/* ── Editor Groups (Split Editor) ── */
+.editor-groups-row {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.editor-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  border-right: 1px solid var(--border-subtle);
+}
+
+.editor-group:last-child {
+  border-right: none;
+}
+
+.editor-group.active-group {
+  z-index: 1;
+}
+
+.editor-group-close {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.editor-group:hover .editor-group-close {
+  opacity: 1;
+}
+
+.editor-group-close:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
 }
 
 /* Bottom Panel Tab Bar (Terminal / Problems) */

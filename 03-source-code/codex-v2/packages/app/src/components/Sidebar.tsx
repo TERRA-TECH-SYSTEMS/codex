@@ -156,6 +156,60 @@ function sortOutline(syms: OutlineSymbol[], mode: OutlineSortMode): OutlineSymbo
 
 // demoTree removed — file tree now loaded from getFS().readDir()
 
+// ── Persistent folder expanded state (VS Code parity) ──────────────────────
+// Shared across all FileTreeNode instances. Persisted to localStorage.
+const STORAGE_KEY = "codex-expanded-folders";
+
+function loadExpandedFolders(): Set<string> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return new Set(JSON.parse(raw));
+  } catch { /* ignore corrupt data */ }
+  return new Set<string>();
+}
+
+function saveExpandedFolders(set: Set<string>) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([...set]));
+  } catch { /* quota exceeded, ignore */ }
+}
+
+const [expandedFolderStore, setExpandedFolderStore] = createSignal<Set<string>>(loadExpandedFolders());
+
+/** Check if a folder path is expanded. */
+function isFolderExpanded(path: string): boolean {
+  return expandedFolderStore().has(path);
+}
+
+/** Toggle a folder's expanded state and persist. */
+function toggleFolder(path: string) {
+  setExpandedFolderStore((prev) => {
+    const next = new Set(prev);
+    if (next.has(path)) next.delete(path);
+    else next.add(path);
+    saveExpandedFolders(next);
+    return next;
+  });
+}
+
+/** Expand a specific folder (used when creating files inside it). */
+function expandFolder(path: string) {
+  setExpandedFolderStore((prev) => {
+    if (prev.has(path)) return prev;
+    const next = new Set(prev);
+    next.add(path);
+    saveExpandedFolders(next);
+    return next;
+  });
+}
+
+/** Collapse all folders and persist. */
+function collapseAllFolders() {
+  const empty = new Set<string>();
+  saveExpandedFolders(empty);
+  setExpandedFolderStore(empty);
+}
+
 /**
  * Compact folders: when a directory has exactly one child that is also a
  * directory, collapse them into a single display row (e.g. "src/components").
@@ -192,7 +246,8 @@ function FileTreeNode(props: {
   gitChanges?: { path: string; status: string }[];
   gitStaged?: { path: string; status: string }[];
 }) {
-  const [expanded, setExpanded] = createSignal(props.node.expanded ?? true);
+  // Use shared persistent folder state instead of local signal
+  const expanded = () => isFolderExpanded(props.node.path);
 
   // Compact single-child directory chains into one display row
   const compacted = createMemo(() =>
@@ -205,12 +260,12 @@ function FileTreeNode(props: {
   // Auto-expand directory when creating inside it (check both original and leaf paths)
   createEffect(() => {
     const creating = props.creatingIn?.path;
-    if (creating === props.node.path || creating === leafPath()) setExpanded(true);
+    if (creating === props.node.path || creating === leafPath()) expandFolder(props.node.path);
   });
 
   const handleClick = () => {
     if (props.node.type === "directory") {
-      setExpanded((v) => !v);
+      toggleFolder(props.node.path);
     } else {
       props.onOpenFile(props.node.path);
     }
@@ -411,12 +466,18 @@ export function Sidebar(props: Props) {
   // File tree from filesystem (replaces hardcoded demoTree)
   const [fsVersion, setFsVersion] = createSignal(0);
   const [workspaceRootName, setWorkspaceRootName] = createSignal<string | null>(null);
-  const [rootExpanded, setRootExpanded] = createSignal(true);
+  // Root expanded state backed by the persistent folder store (key: "__root__")
+  const rootExpanded = () => isFolderExpanded("__root__");
+  const toggleRootExpanded = () => toggleFolder("__root__");
   const [treeMounted, setTreeMounted] = createSignal(false);
   const [fileTree] = createResource(fsVersion, async () => {
     try {
       const tree = await getFS().readDir("", 4);
       setWorkspaceRootName(getRootName());
+      // Auto-expand root on first load if no saved state exists
+      if (tree.length > 0 && !localStorage.getItem(STORAGE_KEY)) {
+        expandFolder("__root__");
+      }
       // Trigger mount animation
       if (tree.length > 0 && !treeMounted()) {
         requestAnimationFrame(() => setTreeMounted(true));
@@ -1135,6 +1196,13 @@ export function Sidebar(props: Props) {
         </span>
         <Show when={props.activePanel === "files"}>
           <button
+            class="sidebar-header-btn"
+            title="Collapse Folders in Explorer"
+            onClick={() => collapseAllFolders()}
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M9 9H4v1h5V9zm0-4H4v1h5V5zm0 8H4v1h5v-1zM14 1v14H1V1h13zm1-1H0v16h16V0h-1z"/><path d="M11.5 7.5L14 5v5l-2.5-2.5z"/></svg>
+          </button>
+          <button
             class={`sidebar-header-btn ${treeFilterVisible() ? "active" : ""}`}
             title="Filter files"
             onClick={() => { setTreeFilterVisible((v) => !v); if (treeFilterVisible()) { setTreeFilterQuery(""); } }}
@@ -1220,7 +1288,7 @@ export function Sidebar(props: Props) {
                 {(node) => <FileTreeNode node={node} depth={0} onOpenFile={props.onOpenFile} onContextMenu={handleTreeContextMenu} editingPath={editingPath()} onEditDone={handleRename} onEditCancel={() => setEditingPath(null)} creatingIn={creatingIn()} onCreateDone={handleCreate} onCreateCancel={() => setCreatingIn(null)} dragOverPath={treeDragOver()} onDragMove={handleDragMove} onDragOverChange={setTreeDragOver} gitChanges={gitChanges()} gitStaged={gitStaged()} />}
               </For>
             }>
-              <div class="tree-root-node" onClick={() => setRootExpanded((v) => !v)}>
+              <div class="tree-root-node" onClick={toggleRootExpanded}>
                 <span class="tree-arrow" style={{ transform: rootExpanded() ? "rotate(90deg)" : "rotate(0deg)" }}>&#9654;</span>
                 <span class="tree-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="var(--text-tertiary)"><path d={rootExpanded() ? "M1.5 3A1.5 1.5 0 000 4.5v8A1.5 1.5 0 001.5 14h13a1.5 1.5 0 001.5-1.5V6.5A1.5 1.5 0 0014.5 5H7.707l-1.5-1.5A1.5 1.5 0 005.086 3H1.5z" : "M1.5 1A1.5 1.5 0 000 2.5v11A1.5 1.5 0 001.5 15h13a1.5 1.5 0 001.5-1.5V4.5A1.5 1.5 0 0014.5 3H7.707l-1.5-1.5A1.5 1.5 0 005.086 1H1.5z"}/></svg></span>
                 <span class="tree-root-name">{workspaceRootName()}</span>
