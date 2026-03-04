@@ -1,0 +1,75 @@
+/* ============================================================================
+ * CodeEX v2 — Application Layout
+ * Copyright 2026 TerraTech Systems. All rights reserved.
+ * ============================================================================ */
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background: var(--bg-base);
+  font-size: calc(var(--app-zoom, 1) * 13px);
+}
+
+.app-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* Smooth width/height transitions for resizable panels (keyboard/programmatic resize).
+   Disabled during mouse drag via .panel-resizing on <html> to avoid input lag. */
+.app-body > div[style*="width"] {
+  transition: width 150ms var(--ease-out);
+  will-change: auto;
+}
+html.panel-resizing .app-body > div[style*="width"] {
+  transition: none;
+  will-change: width;
+}
+
+.editor-terminal-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Bottom Panel Tab Bar (Terminal / Problems) */
+.bottom-panel-tabs {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 var(--space-3);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  gap: 2px;
+}
+
+.bottom-tab {
+  height: 28px;
+  padding: 0 var(--space-3);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-tertiary);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+  white-space: nowrap;
+}
+
+.bottom-tab:hover {
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+}
+
+.bottom-tab.active {
+  color: var(--text-primary);
+  border-bottom-color: var(--accent-blue);
+}

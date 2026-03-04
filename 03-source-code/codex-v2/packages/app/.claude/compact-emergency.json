@@ -1,0 +1,11 @@
+﻿{
+    "continuation_count":  7,
+    "trigger":  "auto",
+    "transcript":  "C:\\Users\\TanenAndrews\\.claude\\projects\\c--Users-TanenAndrews-Documents-Projects-00-workspace\\4dd4c9f1-7fac-4fee-a2d0-d7e621738890.jsonl",
+    "session_id":  "4dd4c9f1-7fac-4fee-a2d0-d7e621738890",
+    "event":  "PRE_COMPACT",
+    "timestamp":  "2026-03-03 20:14:23",
+    "handoff_path":  "01-ageixtic/01a-sessions/02b-february/01c-2026/",
+    "message":  "Compaction imminent. Handoff should already exist. If not, create emergency handoff NOW.",
+    "transcript_size_mb":  17.7
+}

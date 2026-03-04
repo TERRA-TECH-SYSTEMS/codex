@@ -1,0 +1,16 @@
+{
+  "name": "@codeex/desktop",
+  "version": "0.1.0",
+  "description": "CodeEX v2 — TerraRuntime Desktop Wrapper (Tauri 2.x)",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.0.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0"
+  }
+}

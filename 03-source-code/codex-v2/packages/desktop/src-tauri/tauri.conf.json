@@ -1,0 +1,30 @@
+{
+  "productName": "CodeEX",
+  "version": "0.1.0",
+  "identifier": "systems.terratech.codeex",
+  "build": {
+    "frontendDist": "../../app/dist",
+    "devUrl": "http://127.0.0.1:3100",
+    "beforeDevCommand": "bun run --cwd ../app dev",
+    "beforeBuildCommand": "bun run --cwd ../app build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "CodeEX",
+        "width": 1280,
+        "height": 720,
+        "minWidth": 800,
+        "minHeight": 600,
+        "decorations": false,
+        "transparent": false,
+        "resizable": true,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "plugins": {}
+}
