@@ -11,6 +11,11 @@ const patches = [
     source: path.join(__dirname, 'parcel-watcher-bun-compat.js'),
     target: path.join(__dirname, '..', 'node_modules', '@theia', 'core', 'shared', '@parcel', 'watcher', 'index.js'),
   },
+  {
+    name: 'node-metrics-bun-compat',
+    source: path.join(__dirname, 'node-metrics-bun-compat.js'),
+    target: path.join(__dirname, '..', 'node_modules', '@theia', 'metrics', 'lib', 'node', 'node-metrics-contribution.js'),
+  },
 ];
 
 for (const patch of patches) {
