@@ -19,18 +19,16 @@ import { BrowserWindow } from '@theia/core/electron-shared/electron';
 export class IconContribution implements ElectronMainApplicationContribution {
 
     onStart(application: ElectronMainApplication): void {
-        if (os.platform() === 'linux') {
+        const platform = os.platform();
+        if (platform === 'linux' || platform === 'win32') {
             const windowOptions = application.config.electron.windowOptions;
+            const iconPath = path.join(__dirname, '../../resources/icons/WindowIcon/512-512.png');
             if (windowOptions && windowOptions.icon === undefined) {
-                // The window image is undefined. If the executable has an image set, this is used as a fallback.
-                // Since AppImage does not support this anymore via electron-builder, set an image for the linux platform.
-                windowOptions.icon = path.join(__dirname, '../../resources/icons/WindowIcon/512-512.png');
-                // also update any existing windows, e.g. the splashscreen
-                for (const window of BrowserWindow.getAllWindows()) {
-                    window.setIcon(path.join(__dirname, '../../resources/icons/WindowIcon/512-512.png'));
-                }
+                windowOptions.icon = iconPath;
             }
-
+            for (const window of BrowserWindow.getAllWindows()) {
+                window.setIcon(iconPath);
+            }
         }
     }
 }

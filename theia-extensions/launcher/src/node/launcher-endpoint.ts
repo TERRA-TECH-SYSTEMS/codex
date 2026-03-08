@@ -84,7 +84,7 @@ export class TheiaLauncherServiceEndpoint implements BackendApplicationContribut
         const shouldCreateLauncher = request.body.create;
         const uriScheme: string = request.body.uriScheme || 'theia';
         const launcher = `/usr/local/bin/${uriScheme}`;
-        const sudoPromptName = uriScheme === 'theia-next' ? 'Theia IDE Next' : 'Theia IDE';
+        const sudoPromptName = 'CodeEX';
         const target = process.env.APPIMAGE;
         const logFile = await this.getLogFilePath();
         const command = `printf '%s\n' '#!/bin/bash' 'exec "${target}" \\$1 &> ${logFile} &' >${launcher} && chmod +x ${launcher}`;

@@ -1,0 +1,47 @@
+{
+  "private": true,
+  "name": "theia-ide-gixsis-ext",
+  "version": "1.69.0",
+  "description": "CodeEX — Gixsis AI Agent + TerraForge LLM Integration",
+  "license": "Proprietary",
+  "author": "TerraTech Systems <engineering@terratech.systems>",
+  "keywords": ["theia-extension"],
+  "theiaExtensions": [
+    {
+      "frontend": "lib/browser/gixsis-frontend-module",
+      "backend": "lib/node/gixsis-backend-module"
+    }
+  ],
+  "dependencies": {
+    "@theia/ai-chat": "1.70.0-next.11",
+    "@theia/ai-copilot": "1.70.0-next.11",
+    "@theia/ai-core": "1.70.0-next.11",
+    "@theia/core": "1.70.0-next.11",
+    "@theia/file-search": "1.70.0-next.11",
+    "@theia/filesystem": "1.70.0-next.11",
+    "@theia/output": "1.70.0-next.11",
+    "@theia/scm": "1.70.0-next.11",
+    "@theia/search-in-workspace": "1.70.0-next.11",
+    "@theia/workspace": "1.70.0-next.11"
+  },
+  "devDependencies": {
+    "rimraf": "^2.7.1",
+    "typescript": "^4.5.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TERRA-TECH-SYSTEMS/codex.git"
+  },
+  "bugs": {
+    "url": "https://github.com/TERRA-TECH-SYSTEMS/codex/issues"
+  },
+  "homepage": "https://github.com/TERRA-TECH-SYSTEMS/codex",
+  "files": ["lib", "src"],
+  "scripts": {
+    "clean": "rimraf lib *.tsbuildinfo",
+    "build": "tsc -b",
+    "watch": "tsc -b -w",
+    "update:theia": "ts-node ../../scripts/update-theia-version.ts",
+    "update:next": "ts-node ../../scripts/update-theia-version.ts next"
+  }
+}

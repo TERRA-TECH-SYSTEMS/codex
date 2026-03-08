@@ -1,6 +1,6 @@
-appId: eclipse.theia
-productName: TheiaIDE
-copyright: Copyright © 2020-2025 Eclipse Foundation, Inc
+appId: ai.terratech.codex
+productName: CodeEX
+copyright: Copyright © 2026 TerraTech Systems. All rights reserved.
 electronDist: ../../node_modules/electron/dist
 electronVersion: 39.7.0
 asar: true
@@ -19,7 +19,7 @@ files:
   - src-gen
   - lib
   - resources/icons/WindowIcon/512-512.png
-  - resources/TheiaIDESplash.svg
+  - resources/CodeEXSplash.svg
   - scripts
   - "!**node_modules/**"
 extraResources:
@@ -27,47 +27,47 @@ extraResources:
     to: app/plugins
 
 win:
-  icon: resources/icons/WindowsLauncherIcons/TheiaIDE.ico
+  icon: resources/icons/WindowsLauncherIcons/CodeEX.ico
   target:
     - nsis
   publish:
     provider: generic
-    url: "https://download.eclipse.org/theia/ide/${version}/windows"
+    url: "https://github.com/TERRA-TECH-SYSTEMS/codex/releases/download/v${version}"
     useMultipleRangeRequest: false
 mac:
   icon: resources/icons/MacLauncherIcons/icon.icns
   category: public.app-category.developer-tools
   protocols:
-    - name: theia
+    - name: codex
       schemes:
-        - theia
+        - codex
   darkModeSupport: true
   target:
     - dmg
     - zip
   publish:
     provider: generic
-    url: "https://download.eclipse.org/theia/ide/latest/macos"
+    url: "https://github.com/TERRA-TECH-SYSTEMS/codex/releases/download/v${version}"
 linux:
   icon: resources/icons/LinuxLauncherIcons
   category: Development
   mimeTypes:
     - inode/directory
-  vendor: Eclipse Foundation, Inc
+  vendor: TerraTech Systems
   target:
     - deb
     - AppImage
   publish:
     provider: generic
-    url: "https://download.eclipse.org/theia/ide/latest/linux"
+    url: "https://github.com/TERRA-TECH-SYSTEMS/codex/releases/download/v${version}"
 
 nsis:
   menuCategory: true
   oneClick: false
   perMachine: false
-  installerHeaderIcon: resources/icons/WindowsLauncherIcons/TheiaIDE.ico
-  installerIcon: resources/icons/WindowsLauncherIcons/TheiaIDE.ico
-  uninstallerIcon: resources/icons/WindowsLauncherIcons/TheiaIDE.ico
+  installerHeaderIcon: resources/icons/WindowsLauncherIcons/CodeEX.ico
+  installerIcon: resources/icons/WindowsLauncherIcons/CodeEX.ico
+  uninstallerIcon: resources/icons/WindowsLauncherIcons/CodeEX.ico
   installerSidebar: resources/icons/InstallerSidebarImage/164-314Windows.bmp
   uninstallerSidebar: resources/icons/InstallerSidebarImage/164-314Windows.bmp
   allowToChangeInstallationDirectory: true

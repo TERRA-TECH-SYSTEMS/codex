@@ -98,7 +98,7 @@ export class TheiaIDEAboutDialog extends AboutDialog {
             </p>
 
             <p className='gs-sub-header' >
-                {'VS Code API Version: ' + this.vscodeApiVersion}
+                {'Extension API: ' + this.vscodeApiVersion}
             </p>
         </div>;
     }

@@ -92,7 +92,7 @@ export class TheiaDesktopFileServiceEndpoint implements BackendApplicationContri
         }
 
         const createOrUpdate = request.body.create;
-        const applicationName: string = request.body.applicationName || 'Theia IDE';
+        const applicationName: string = request.body.applicationName || 'CodeEX';
         const createUrlHandler: boolean = request.body.createUrlHandler !== false;
         const uriScheme: string = request.body.uriScheme || 'theia';
         const appId = applicationName.toLowerCase().replace(/\s+/g, '-');

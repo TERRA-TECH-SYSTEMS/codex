@@ -1,0 +1,1 @@
+{"version":3,"file":"delegate-task-tool.d.ts","sourceRoot":"","sources":["delegate-task-tool.ts"],"names":[],"mappings":"AAOA,OAAO,EAAE,YAAY,EAAE,WAAW,EAAE,MAAM,gBAAgB,CAAC;AAG3D,qBACa,gBAAiB,YAAW,YAAY;IACjD,MAAM,CAAC,EAAE,SAAyB;IAElC,OAAO,IAAI,WAAW;CA8BzB"}

@@ -1,0 +1,1 @@
+{"version":3,"file":"git-status-tool.d.ts","sourceRoot":"","sources":["git-status-tool.ts"],"names":[],"mappings":"AAKA,OAAO,EAAE,YAAY,EAAE,WAAW,EAAE,MAAM,gBAAgB,CAAC;AAC3D,OAAO,EAAE,UAAU,EAAE,MAAM,oCAAoC,CAAC;AAGhE,qBACa,aAAc,YAAW,YAAY;IAC9C,MAAM,CAAC,EAAE,SAAsB;IAG/B,SAAS,CAAC,QAAQ,CAAC,UAAU,EAAE,UAAU,CAAC;IAE1C,OAAO,IAAI,WAAW;CAuCzB"}

@@ -1,19 +1,19 @@
 {
   "private": true,
-  "name": "theia-ide-electron-app",
-  "description": "Eclipse Theia IDE product",
-  "productName": "Theia IDE",
-  "version": "1.69.0",
+  "name": "codex-electron-app",
+  "description": "CodeEX IDE by TerraTech Systems",
+  "productName": "CodeEX",
+  "version": "5.0.0",
   "main": "scripts/theia-electron-main.js",
   "license": "MIT",
-  "author": "Eclipse Theia <theia-dev@eclipse.org>",
-  "homepage": "https://github.com/eclipse-theia/theia-ide#readme",
+  "author": "TerraTech Systems <dev@terratechsystems.com>",
+  "homepage": "https://github.com/TERRA-TECH-SYSTEMS/codex#readme",
   "bugs": {
-    "url": "https://github.com/eclipse-theia/theia/issues"
+    "url": "https://github.com/TERRA-TECH-SYSTEMS/codex/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/eclipse-theia/theia-ide.git"
+    "url": "git+https://github.com/TERRA-TECH-SYSTEMS/codex.git"
   },
   "engines": {
     "yarn": ">=1.7.0 <2",
@@ -23,17 +23,22 @@
     "target": "electron",
     "frontend": {
       "config": {
-        "applicationName": "Theia IDE",
+        "applicationName": "CodeEX",
         "reloadOnReconnect": true,
         "preferences": {
           "toolbar.showToolbar": true
         },
         "electron": {
+          "windowOptions": {
+            "icon": "resources/icons/WindowIcon/512-512.png"
+          },
+          "uriScheme": "codex",
           "showWindowEarly": false,
           "splashScreenOptions": {
-            "content": "resources/TheiaIDESplash.svg",
+            "content": "resources/CodeEXSplash.svg",
             "height": 276,
-            "width": 446
+            "width": 446,
+            "minDuration": 2000
           }
         }
       }
@@ -43,7 +48,7 @@
         "frontendConnectionTimeout": -1,
         "startupTimeout": -1,
         "resolveSystemPlugins": false,
-        "configurationFolder": ".theia-ide"
+        "configurationFolder": ".codex"
       }
     },
     "generator": {
@@ -126,6 +131,7 @@
     "@theia/vsx-registry": "1.70.0-next.11",
     "@theia/workspace": "1.70.0-next.11",
     "fs-extra": "^9.0.1",
+    "theia-ide-gixsis-ext": "1.69.0",
     "theia-ide-launcher-ext": "1.69.0",
     "theia-ide-product-ext": "1.69.0",
     "theia-ide-updater-ext": "1.69.0"
@@ -162,8 +168,8 @@
     "build:prod": "yarn -s rebuild && theia build --app-target=\"electron\"",
     "rebuild": "theia rebuild:electron --cacheRoot ../..",
     "watch": "concurrently -n compile,build \"theiaext watch --preserveWatchOutput\" \"theia build --watch --mode development\"",
-    "start": "electron scripts/theia-electron-main.js --plugins=local-dir:../../plugins",
-    "start:debug": "yarn start --log-level=debug",
+    "start": "node scripts/electron-launcher.js scripts/theia-electron-main.js --plugins=local-dir:../../plugins",
+    "start:debug": "node scripts/electron-launcher.js scripts/theia-electron-main.js --plugins=local-dir:../../plugins --log-level=debug",
     "package": "yarn clean:dist && yarn rebuild && electron-builder -c.mac.identity=null --publish never",
     "package:prod": "yarn deploy",
     "deploy": "yarn clean:dist && yarn rebuild && electron-builder -c.mac.identity=null --publish always",

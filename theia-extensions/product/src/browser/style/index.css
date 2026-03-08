@@ -7,8 +7,14 @@
  * SPDX-License-Identifier: MIT
  ********************************************************************************/
 
+/* Light theme: black logo on transparent */
 :root {
-    --theia-branding-logo: url(../icons/TheiaIDE.png);
+    --theia-branding-logo: url(../icons/CodeEX.png);
+}
+
+/* Dark theme: white logo on transparent */
+body.theia-dark {
+    --theia-branding-logo: url(../icons/CodeEX-dark.png);
 }
 
 .theia-icon {
@@ -18,12 +24,8 @@
     background-size: contain;
 }
 
-body[data-theia-branding="next"] {
-    --theia-branding-logo: url(../icons/TheiaIDE-next.png);
-}
-
-body[data-theia-branding="next"] .theia-icon {
-    background-image: url("../icons/512-512-next.png");
+body.theia-dark .theia-icon {
+    background-image: url("../icons/512-512-dark.png");
 }
 
 .gs-blue-header {
@@ -83,3 +85,26 @@ ul.theia-aboutExtensions {
     padding: 0;
     margin-left: 10px;
 }
+
+/* === CodeEX Branding Overrides === */
+
+/* Replace upstream robot icon in AI Chat welcome panel with CodeEX logo */
+.theia-WelcomeMessage-Logo {
+    display: none !important;
+}
+
+.theia-WelcomeMessage-Main::before {
+    content: '';
+    display: block;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 16px auto;
+    background-image: var(--theia-branding-logo);
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    opacity: 0.35;
+    filter: grayscale(100%);
+}
+
+/* GitHub Copilot status bar item removed via hardcoded StatusBar.removeElement in GixsisFrontendContribution */

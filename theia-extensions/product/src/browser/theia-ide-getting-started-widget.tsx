@@ -9,8 +9,8 @@
 
 import * as React from 'react';
 
-import { Message } from '@theia/core/lib/browser';
-import { PreferenceService } from '@theia/core/lib/common';
+import { codicon, Message } from '@theia/core/lib/browser';
+import { nls, PreferenceService } from '@theia/core/lib/common';
 import { inject, injectable } from '@theia/core/shared/inversify';
 import {
     renderDocumentation, renderDownloads, renderExtendingCustomizing, renderProductName, renderSourceCode, renderSupport, renderTickets, renderWhatIs, renderCollaboration
@@ -155,16 +155,85 @@ export class TheiaIDEGettingStartedWidget extends GettingStartedWidget {
             </p>
 
             <p className='gs-sub-header' >
-                {'VS Code API Version: ' + this.vscodeApiVersion}
+                {'Extension API: ' + this.vscodeApiVersion}
             </p>
         </div>;
     }
 
-    protected renderAIBanner(): React.ReactNode {
-        const framework = super.renderAIBanner();
-        if (React.isValidElement<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>>(framework)) {
-            return React.cloneElement(framework, { className: 'gs-section' });
-        }
-        return framework;
+    protected renderNews(): React.ReactNode {
+        return <div className='gs-section'>
+            <h3 className='gs-section-header'>AI-Powered Development</h3>
+            <div className='gs-action-container'>
+                <a
+                    role={'button'}
+                    style={{ fontSize: 'var(--theia-ui-font-size2)' }}
+                    tabIndex={0}
+                    onClick={() => this.doOpenAIChatView()}
+                    onKeyDown={(e: React.KeyboardEvent) => this.doOpenAIChatViewEnter(e)}>
+                    Open the AI Chat View to get started
+                </a>
+            </div>
+        </div>;
     }
+
+    protected renderAIBanner(): React.ReactNode {
+        return <div className='gs-section'>
+            <div className='gs-container gs-aifeature-container'>
+                <div className='flex-grid'>
+                    <div className='col'>
+                        <h3 className='gs-section-header'>AI-Powered Development</h3>
+                        <div className='gs-action-container'>
+                            <p>
+                                CodeEX includes integrated AI assistance powered by the Gixsis model,
+                                offering intelligent code completion, chat-based development support,
+                                and context-aware suggestions.
+                            </p>
+                            <p>
+                                AI features are built into CodeEX and available to authorized accounts.
+                                Enable AI in Settings to get started.
+                            </p>
+                        </div>
+                        <div className='gs-action-container'>
+                            <a
+                                role={'button'}
+                                style={{ fontSize: 'var(--theia-ui-font-size2)' }}
+                                tabIndex={0}
+                                onClick={() => this.doOpenAIChatView()}
+                                onKeyDown={(e: React.KeyboardEvent) => this.doOpenAIChatViewEnter(e)}>
+                                Open the AI Chat View to get started
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>;
+    }
+
+    protected renderHelp(): React.ReactNode {
+        return <div className='gs-section'>
+            <h3 className='gs-section-header'>
+                <i className={codicon('question')}></i>
+                {nls.localizeByDefault('Help')}
+            </h3>
+            <div className='gs-action-container'>
+                <a
+                    role={'button'}
+                    tabIndex={0}
+                    onClick={() => this.doOpenExternalLink('https://terratechsystems.com/codex/docs')}
+                    onKeyDown={(e: React.KeyboardEvent) => this.doOpenExternalLinkEnter(e, 'https://terratechsystems.com/codex/docs')}>
+                    {nls.localizeByDefault('Documentation')}
+                </a>
+            </div>
+            <div className='gs-action-container'>
+                <a
+                    role={'button'}
+                    tabIndex={0}
+                    onClick={() => this.doOpenExternalLink('https://terratechsystems.com/codex/extensions')}
+                    onKeyDown={(e: React.KeyboardEvent) => this.doOpenExternalLinkEnter(e, 'https://terratechsystems.com/codex/extensions')}>
+                    Building Extensions
+                </a>
+            </div>
+        </div>;
+    }
+
 }
